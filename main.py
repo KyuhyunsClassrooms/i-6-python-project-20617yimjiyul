@@ -1,101 +1,620 @@
-# AI 활용 자유 주제 파이썬 미니 프로젝트
-# 이름 또는 학번: 
-# 프로젝트 주제: 
+import random
 
-# ============================================================
-# 사용 안내
-# ------------------------------------------------------------
-# 이 파일은 예시 골격입니다.
-# 그대로 제출하지 말고, 반드시 자신의 주제에 맞게 수정하세요.
-#
-# 필수 조건
-# 1. 2차원 리스트 사용
-# 2. 함수 2개 이상, 가능하면 3개 이상 분리
-# 3. 조건문 사용
-# 4. 반복문 사용
-# 5. 실행 결과 출력
-# ============================================================
+# ==========================
+# 기본 함수
+# ==========================
 
+def bar(cur, maxv, length=20):
+    filled = int(cur / maxv * length)
+    return "█" * filled + "░" * (length - filled)
 
-# ------------------------------------------------------------
-# 1. 데이터 준비: 2차원 리스트
-# ------------------------------------------------------------
-# 아래 예시는 "활동 추천 프로그램"입니다.
-# 자신의 주제에 맞게 data를 만드세요.
-#
-# 현재 열의 의미:
-# 0번 열: 활동 이름
-# 1번 열: 필요한 시간(분)
-# 2번 열: 추천 기분
-# 3번 열: 활동 유형
-# ------------------------------------------------------------
+def pause():
+    input("\n엔터를 누르세요...")
 
-activities = [
-    ["산책하기", 30, "피곤", "운동"],
-    ["짧은 낮잠", 20, "피곤", "휴식"],
-    ["좋아하는 음악 듣기", 10, "우울", "휴식"],
-    ["문제집 3쪽 풀기", 40, "차분", "공부"],
-    ["방 정리하기", 25, "답답", "생활"],
-    ["친구에게 연락하기", 15, "우울", "소통"],
+# ==========================
+# 플레이어
+# ==========================
+
+name = input("플레이어 이름: ")
+
+player = {
+    "name": name,
+    "job": "전사",
+    "level": 1,
+    "exp": 0,
+    "hp": 100,
+    "max_hp": 100,
+    "atk": 10,
+    "crit": 10,
+    "potions": 3
+}
+
+weapon = {
+    "name": "녹슨 철검",
+    "level": 1,
+    "exp": 0,
+    "atk": 5,
+    "skill_name": "강철 베기",
+    "skill_damage": 250
+}
+weapon_pool = [
+
+    {
+        "name": "강철검",
+        "atk": 15,
+        "skill_name": "강철 난무",
+        "skill_damage": 350
+    },
+
+    {
+        "name": "기사검",
+        "atk": 30,
+        "skill_name": "기사의 맹세",
+        "skill_damage": 450
+    },
+
+    {
+        "name": "백은 성검",
+        "atk": 60,
+        "skill_name": "성광참",
+        "skill_damage": 650
+    },
+
+    {
+        "name": "붉은 달의 검",
+        "atk": 150,
+        "skill_name": "월광참",
+        "skill_damage": 1000
+    },
+
+    {
+        "name": "화염 일륜도",
+        "atk": 250,
+        "skill_name": "화염의 호흡",
+        "skill_damage": 1500
+    },
+
+    {
+        "name": "수류 일륜도",
+        "atk": 260,
+        "skill_name": "물의 호흡",
+        "skill_damage": 1600
+    },
+
+    {
+        "name": "뇌광 일륜도",
+        "atk": 280,
+        "skill_name": "번개의 호흡",
+        "skill_damage": 1800
+    },
+
+    {
+        "name": "천멸신검",
+        "atk": 500,
+        "skill_name": "천멸섬",
+        "skill_damage": 3000
+    }
 ]
 
+floor = 1
+checkpoint = 1
 
-# ------------------------------------------------------------
-# 2. 함수 정의
-# ------------------------------------------------------------
+# ==========================
+# 몬스터
+# ==========================
 
-def show_intro():
-    """프로그램 제목과 안내를 출력한다."""
-    print("=" * 40)
-    print("AI 활용 자유 주제 파이썬 미니 프로젝트")
-    print("예시: 기분과 시간에 따른 활동 추천기")
-    print("=" * 40)
+titles = [
+    "지각한",
+    "숙제 안 한",
+    "급식 기다리는",
+    "수행평가에 쫓기는",
+    "벼락치기하는",
+    "내신이 걱정되는"
+]
 
+monster_data = {
+    (1,9): ["슬라임","고블린","늑대"],
+    (11,19): ["하피","리자드맨","오크"],
+    (21,29): ["트롤","해골","좀비"],
+    (31,39): ["리치","미믹","골렘"],
+}
+bosses = {
 
-def get_user_input():
-    """사용자에게 기분과 남은 시간을 입력받는다."""
-    mood = input("현재 기분을 입력하세요. 예: 피곤, 우울, 차분, 답답: ")
-    minutes = int(input("사용 가능한 시간을 분 단위로 입력하세요: "))
-    return mood, minutes
+    10: "고블린 킹 그록",
+    20: "오크 대장 로칸",
+    30: "언데드 군주 모르테",
+    40: "미믹 제왕 데보어",
+    50: "황소왕 아스테론",
+    60: "외눈의 군주 사이클론",
+    70: "죽음의 기사왕 아르가스",
+    80: "흑룡 제왕 카르자크",
+    90: "심연의 신 리바노스",
+    100: "탑의 지배자 제로스"
+}
+# ==========================
+# 상태창
+# ==========================
 
+def show_status():
 
-def find_recommendations(data, mood, minutes):
-    """2차원 리스트를 반복하며 조건에 맞는 활동을 찾는다."""
-    results = []
+    need_exp = player["level"] ** 2 * 20
+    need_weapon = weapon["level"] ** 2 * 10
 
-    for row in data:
-        name = row[0]
-        required_minutes = row[1]
-        recommended_mood = row[2]
-        activity_type = row[3]
+    print("\n" + "="*50)
 
-        # 조건문: 사용자의 기분과 시간이 활동 조건에 맞는지 판단한다.
-        if recommended_mood == mood and required_minutes <= minutes:
-            results.append([name, required_minutes, activity_type])
+    print(f"{player['name']} ({player['job']})")
+    print(f"현재 층 : {floor}")
 
-    return results
+    print()
 
+    print(f"LV {player['level']}")
 
-def print_result(results):
-    """추천 결과를 출력한다."""
-    print("\n[추천 결과]")
+    print(
+        f"HP [{bar(player['hp'], player['max_hp'])}] "
+        f"{player['hp']}/{player['max_hp']}"
+    )
 
-    if len(results) == 0:
-        print("조건에 맞는 활동이 없습니다.")
-        print("시간을 늘리거나 다른 기분을 입력해 보세요.")
+    print(
+        f"EXP [{bar(player['exp'], need_exp)}] "
+        f"{player['exp']}/{need_exp}"
+    )
+
+    print()
+
+    print(
+        f"검 : {weapon['name']} "
+        f"(LV {weapon['level']})"
+    )
+
+    print(
+        f"검 EXP [{bar(weapon['exp'], need_weapon)}] "
+        f"{weapon['exp']}/{need_weapon}"
+    )
+
+    print(f"포션 : {player['potions']}")
+
+    print("="*50)
+
+# ==========================
+# 스킬
+# ==========================
+
+def get_skills():
+
+    lv = player["level"]
+
+    if lv < 10:
+        s1 = ("연속 베기",150)
+    elif lv < 20:
+        s1 = ("폭풍 베기",300)
     else:
-        for item in results:
-            print(f"- {item[0]} / {item[1]}분 / 유형: {item[2]}")
+        s1 = ("천공참",500)
 
+    if lv < 10:
+        s2 = ("강타",200)
+    elif lv < 20:
+        s2 = ("대지 강타",350)
+    else:
+        s2 = ("지진 붕괴",600)
 
-def main():
-    show_intro()
-    mood, minutes = get_user_input()
-    results = find_recommendations(activities, mood, minutes)
-    print_result(results)
+    if lv < 10:
+        s3 = ("흡혈격",180)
+    elif lv < 20:
+        s3 = ("생명 흡수",300)
+    else:
+        s3 = ("영혼 포식",500)
 
+    return s1,s2,s3
 
-# ------------------------------------------------------------
-# 3. 프로그램 실행
-# ------------------------------------------------------------
-main()
+# ==========================
+# 레벨업
+# ==========================
+
+def level_up():
+
+    while True:
+
+        need = player["level"] ** 2 * 20
+
+        if player["exp"] < need:
+            break
+
+        player["exp"] -= need
+        player["level"] += 1
+
+        player["max_hp"] += 20
+        player["hp"] = player["max_hp"]
+
+        player["atk"] += 5
+
+        print(f"\n🎉 LV {player['level']} 달성!")
+
+def weapon_level_up():
+
+    while True:
+
+        need = weapon["level"] ** 2 * 10
+
+        if weapon["exp"] < need:
+            break
+
+        weapon["exp"] -= need
+        weapon["level"] += 1
+
+        weapon["atk"] += 2
+
+        print(
+            f"\n⚔️ {weapon['name']} "
+            f"LV {weapon['level']}!"
+        )
+
+# ==========================
+# 몬스터 생성
+# ==========================
+
+def create_monster():
+
+    for r, monsters in monster_data.items():
+
+        if r[0] <= floor <= r[1]:
+
+            return {
+                "name":
+                random.choice(titles)
+                + " "
+                + random.choice(monsters),
+
+                "hp":
+                50 + floor * 20,
+
+                "max_hp":
+                50 + floor * 20,
+
+                "atk":
+                5 + floor * 3
+            }
+
+    return {
+    "name":
+    random.choice(titles)
+    + " "
+    + random.choice(monsters),
+
+    "hp":
+    50 + floor * 20,
+
+    "max_hp":
+    50 + floor * 20,
+
+    "atk":
+    5 + floor * 3,
+
+    "boss": False
+}
+def create_boss():
+
+    boss_name = bosses[floor]
+
+    if floor == 100:
+
+        hp = 50000
+        atk = 3000
+
+    else:
+
+        hp = floor * 250
+        atk = floor * 10
+
+    return {
+
+        "name": boss_name,
+
+        "hp": hp,
+        "max_hp": hp,
+
+        "atk": atk,
+
+        "boss": True
+    }
+# ==========================
+# 포션
+# ==========================
+
+def use_potion():
+    
+
+    if player["potions"] <= 0:
+
+        print("포션 없음!")
+        return
+
+    heal = player["max_hp"] // 2
+
+    player["hp"] = min(
+        player["max_hp"],
+        player["hp"] + heal
+    )
+
+    player["potions"] -= 1
+
+    print(f"{heal} 회복!")
+def choose_weapon_reward():
+
+    global weapon
+
+    print("\n" + "=" * 50)
+    print("⚔️ 검 보상")
+    print("=" * 50)
+
+    rewards = []
+
+    for _ in range(3):
+
+        rewards.append(
+            random.choice(
+                weapon_pool
+            )
+        )
+
+    for i, w in enumerate(rewards, start=1):
+
+        print()
+
+        print(
+            f"{i}. {w['name']}"
+        )
+
+        print(
+            f"ATK +{w['atk']}"
+        )
+
+        print(
+            f"스킬 : "
+            f"{w['skill_name']}"
+        )
+
+    print()
+    print("0. 현재 검 유지")
+
+    while True:
+
+        choice = input(
+            "\n선택 : "
+        )
+
+        if choice == "0":
+            return
+
+        if choice in [
+            "1",
+            "2",
+            "3"
+        ]:
+
+            selected = rewards[
+                int(choice)-1
+            ]
+
+            old_level = weapon["level"]
+            old_exp = weapon["exp"]
+
+            weapon = {
+
+                "name":
+                selected["name"],
+
+                "level":
+                old_level,
+
+                "exp":
+                old_exp,
+
+                "atk":
+                selected["atk"],
+
+                "skill_name":
+                selected["skill_name"],
+
+                "skill_damage":
+                selected["skill_damage"]
+            }
+
+            print(
+                f"\n⚔️ "
+                f"{selected['name']}"
+                f" 장착!"
+            )
+
+            pause()
+
+            return
+# ==========================
+# 전투
+# ==========================
+
+def battle(monster):
+
+    while True:
+
+        s1,s2,s3 = get_skills()
+
+        print("\n" + "="*50)
+
+        print(monster["name"])
+
+        print(
+            f"HP [{bar(monster['hp'], monster['max_hp'])}] "
+            f"{monster['hp']}/{monster['max_hp']}"
+        )
+
+        print()
+
+        print(
+            f"내 HP [{bar(player['hp'], player['max_hp'])}] "
+            f"{player['hp']}/{player['max_hp']}"
+        )
+
+        print()
+
+        print("0 기본공격")
+        print(f"1 {s1[0]}")
+        print(f"2 {s2[0]}")
+        print(f"3 {s3[0]}")
+        print(f"4 {weapon['skill_name']}")
+        print("5 포션")
+
+        choice = input("\n선택 : ")
+
+        if choice == "5":
+            use_potion()
+            continue
+
+        atk = player["atk"] + weapon["atk"]
+
+        dmg = atk
+
+        if choice == "1":
+            dmg = atk * s1[1] // 100
+
+        elif choice == "2":
+            dmg = atk * s2[1] // 100
+
+        elif choice == "3":
+
+            dmg = atk * s3[1] // 100
+
+            heal = dmg // 3
+
+            player["hp"] = min(
+                player["max_hp"],
+                player["hp"] + heal
+            )
+
+        elif choice == "4":
+
+            dmg = (
+                atk *
+                weapon["skill_damage"]
+                // 100
+            )
+
+        if random.randint(1,100) <= player["crit"]:
+
+            dmg *= 2
+
+            print("🔥 크리티컬!")
+
+        monster["hp"] -= dmg
+
+        print(f"{dmg} 피해!")
+
+        if monster["hp"] <= 0:
+
+            exp = floor * 15
+            wexp = floor * 10
+
+            print(
+                f"\n{monster['name']} 처치!"
+            )
+
+            print(f"EXP +{exp}")
+            print(f"검 EXP +{wexp}")
+
+            player["exp"] += exp
+            weapon["exp"] += wexp
+
+            level_up()
+            weapon_level_up()
+
+            return True
+
+        mdmg = monster["atk"]
+
+        player["hp"] -= mdmg
+
+        print(
+            f"{monster['name']}의 공격!"
+        )
+
+        print(f"{mdmg} 피해!")
+
+        if player["hp"] <= 0:
+            return False
+def floor_reward():
+
+    print("\n" + "=" * 50)
+
+    print("층 클리어 보상")
+
+    print("=" * 50)
+
+    print("1. HP 완전 회복")
+    print("2. 포션 +1")
+    print("3. 검 선택")
+
+    choice = input("\n선택 : ")
+
+    if choice == "1":
+        player["hp"] = player["max_hp"]
+
+    elif choice == "2":
+        player["potions"] += 1
+
+    elif choice == "3":
+        choose_weapon_reward()
+
+    pause()
+# ==========================
+# 메인 루프
+# ==========================
+
+while True:
+
+    show_status()
+
+    if floor in bosses:
+
+     monster = create_boss()
+
+        print("\n" + "="*50)
+        print(f"⚠️ {floor}층 보스 등장!")
+        print(monster["name"])
+        print("="*50)
+
+    else:
+
+    monster = create_monster()
+
+    win = battle(monster)
+
+    if win:
+
+        floor += 1
+
+        if floor % 10 == 1:
+            checkpoint = floor
+
+        print(
+            f"\n{floor-1}층 클리어!"
+        )
+        floor_reward()
+        if floor >= 100:
+            print("\n🎉 GAME CLEAR 🎉")
+            break
+
+        pause()
+
+    else:
+
+        print("\n사망!")
+
+        floor = checkpoint
+
+        player["hp"] = player["max_hp"]
+
+        print(
+            f"{checkpoint}층에서 부활!"
+        )
+
+        pause()
+       

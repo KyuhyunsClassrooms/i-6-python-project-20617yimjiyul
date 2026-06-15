@@ -239,10 +239,9 @@ def weapon_level_up():
             break
 
         weapon["exp"] -= need
-        weapon["level"] += 1
-
-        weapon["atk"] += 2
-
+        weapon["level"] += 1   
+        if weapon["level"] == 100:
+         evolve_weapon()
         print(
             f"\n⚔️ {weapon['name']} "
             f"LV {weapon['level']}!"
@@ -338,6 +337,54 @@ def use_potion():
     player["potions"] -= 1
 
     print(f"{heal} 회복!")
+    
+def get_weapon_pool():
+
+    if floor <= 20:
+
+        return [
+            "강철검",
+            "기사검",
+            "백은 성검"
+        ]
+
+    elif floor <= 40:
+
+        return [
+            "백은 성검",
+            "붉은 달의 검",
+            "그림자 절단검"
+        ]
+
+    elif floor <= 60:
+
+        return [
+            "화염 일륜도",
+            "수류 일륜도",
+            "뇌광 일륜도"
+        ]
+
+    elif floor <= 80:
+
+        return [
+            "흑룡참마검",
+            "천멸신검",
+            "창세신검 아르카디아"
+        ]
+
+    else:
+
+        weapons = [
+            "공허의 검 오블리비언",
+            "무한의 검 에테르노바",
+            "신살검 카오스브링어"
+        ]
+
+        if random.randint(1, 100) == 1:
+            weapons.append("절대신검 엑스칼리온")
+
+        return weapons
+     
 def choose_weapon_reward():
 
     global weapon
@@ -348,13 +395,20 @@ def choose_weapon_reward():
 
     rewards = []
 
-    for _ in range(3):
+    available_names = get_weapon_pool()
 
-        rewards.append(
-            random.choice(
-                weapon_pool
-            )
-        )
+    possible_weapons = []
+
+    for w in weapon_pool:
+
+        if w["name"] in available_names:
+
+            possible_weapons.append(w)
+
+    rewards = random.sample(
+        possible_weapons,
+        min(3, len(possible_weapons))
+    )
 
     for i, w in enumerate(rewards, start=1):
 
@@ -434,20 +488,15 @@ def choose_weapon_reward():
 
 def battle(monster):
 
-    while True:
+     while monster["hp"] > 0 and player["hp"] > 0:
 
-        s1,s2,s3 = get_skills()
-
-        print("\n" + "="*50)
-
+        print("\n" + "=" * 50)
         print(monster["name"])
 
         print(
-            f"HP [{bar(monster['hp'], monster['max_hp'])}] "
+            f"몬스터 HP [{bar(monster['hp'], monster['max_hp'])}] "
             f"{monster['hp']}/{monster['max_hp']}"
         )
-
-        print()
 
         print(
             f"내 HP [{bar(player['hp'], player['max_hp'])}] "
@@ -455,6 +504,10 @@ def battle(monster):
         )
 
         print()
+
+        s1 = player["skills"][0]
+        s2 = player["skills"][1]
+        s3 = player["skills"][2]
 
         print("0 기본공격")
         print(f"1 {s1[0]}")
@@ -470,7 +523,6 @@ def battle(monster):
             continue
 
         atk = player["atk"] + weapon["atk"]
-
         dmg = atk
 
         if choice == "1":
@@ -498,7 +550,8 @@ def battle(monster):
                 // 100
             )
 
-        if random.randint(1,100) <= player["crit"]:
+        # 크리티컬
+        if random.randint(1, 100) <= player["crit"]:
 
             dmg *= 2
 
@@ -508,10 +561,16 @@ def battle(monster):
 
         print(f"{dmg} 피해!")
 
+        # 몬스터 처치
         if monster["hp"] <= 0:
 
             exp = floor * 15
             wexp = floor * 10
+
+            if monster.get("boss", False):
+
+                exp *= 3
+                wexp *= 3
 
             print(
                 f"\n{monster['name']} 처치!"
@@ -526,8 +585,17 @@ def battle(monster):
             level_up()
             weapon_level_up()
 
+            # 검 진화 체크
+            if weapon["level"] >= 100:
+                evolve_weapon()
+
+            # 보스 드랍
+            if monster.get("boss", False):
+                boss_drop()
+
             return True
 
+        # 몬스터 턴
         mdmg = monster["atk"]
 
         player["hp"] -= mdmg
@@ -539,6 +607,69 @@ def battle(monster):
         print(f"{mdmg} 피해!")
 
         if player["hp"] <= 0:
+
+            return False
+def evolve_weapon():
+
+    evolutions = {
+
+        "화염 일륜도":
+        {
+            "name": "홍련 일륜도",
+            "atk": 500,
+            "skill_name": "홍련멸화",
+            "skill_damage": 3000
+        },
+
+        "수류 일륜도":
+        {
+            "name": "해신 일륜도",
+            "atk": 550,
+            "skill_name": "해신난무",
+            "skill_damage": 3200
+        },
+
+        "뇌광 일륜도":
+        {
+            "name": "신뢰 일륜도",
+            "atk": 600,
+            "skill_name": "신뢰섬",
+            "skill_damage": 3500
+        },
+
+        "창세신검 아르카디아":
+        {
+            "name": "창세신검 아르카디아 EX",
+            "atk": 5000,
+            "skill_name": "창세멸망",
+            "skill_damage": 15000
+        }
+    }
+
+    if weapon["name"] in evolutions:
+
+        evo = evolutions[weapon["name"]]
+
+        weapon["name"] = evo["name"]
+        weapon["atk"] = evo["atk"]
+        weapon["skill_name"] = evo["skill_name"]
+        weapon["skill_damage"] = evo["skill_damage"]
+
+        print("\n🌟 검 진화!")
+        print(f"{weapon['name']} 획득!")
+        return True
+
+    mdmg = monster["atk"]
+
+    player["hp"] -= mdmg
+
+    print(
+            f"{monster['name']}의 공격!"
+        )
+
+    print(f"{mdmg} 피해!")
+
+    if player["hp"] <= 0:
             return False
 def floor_reward():
 
@@ -574,21 +705,20 @@ while True:
 
     if floor in bosses:
 
-     monster = create_boss()
+        monster = create_boss()
 
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print(f"⚠️ {floor}층 보스 등장!")
         print(monster["name"])
-        print("="*50)
+        print("=" * 50)
 
     else:
 
-    monster = create_monster()
+        monster = create_monster()
 
     win = battle(monster)
 
     if win:
-
         floor += 1
 
         if floor % 10 == 1:
